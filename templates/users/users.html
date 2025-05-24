@@ -4,13 +4,15 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="mb-4">User List</h1>
+    <h1 class="mb-4">Liste Des Utilisateurs</h1>
 
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
         <tr>
             <th>ID</th>
-            <th>Username</th>
+            <th>Login</th>
+            <th>Prenom</th>
+            <th>Nom</th>
             <th>Email</th>
             <th>Role</th>
             <th>Action</th>
@@ -22,6 +24,8 @@
             <tr>
                 <td>{{ user.id }}</td>
                 <td>{{ user.login }}</td>
+                <td>{{ user.prenom }}</td>
+                <td>{{ user.nom }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.role_id }}</td>
                 <td>
@@ -37,4 +41,36 @@
 
     
 </div>
+<!-- users table code هنا -->
+
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if pagination.has_prev %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('users_bp.list_users', page=pagination.prev_num) }}">« Prev</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">« Prev</span></li>
+    {% endif %}
+
+    {% for p in pagination.iter_pages() %}
+      {% if p %}
+        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('users_bp.list_users', page=p) }}">{{ p }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('users_bp.list_users', page=pagination.next_num) }}">Next »</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Next »</span></li>
+    {% endif %}
+  </ul>
+</nav>
+
 {% endblock %}

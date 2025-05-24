@@ -1,6 +1,10 @@
 from models.user import User, db
 
 class UserRepository:
+
+    @staticmethod
+    def get_paginated(page, per_page=5):
+        return User.query.paginate(page=page, per_page=per_page)
     @staticmethod
     def get_all():
         return User.query.all()
