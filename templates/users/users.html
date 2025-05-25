@@ -15,7 +15,9 @@
             <th>Nom</th>
             <th>Email</th>
             <th>Role</th>
-            <th>Action</th>
+            <th>
+                <button class="btn btn-info w-100">Ajouter</button>
+            </th>
             
         </tr>
         </thead>
@@ -28,9 +30,12 @@
                 <td>{{ user.nom }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.role_id }}</td>
-                <td>
+                <td class="d-flex justify-content-evenly">
                     <button class="btn btn-primary">
                         Modifer
+                    </button>
+                    <button class="btn btn-danger">
+                        Supprimer
                     </button>
                 </td>
 
@@ -41,7 +46,6 @@
 
     
 </div>
-<!-- users table code هنا -->
 
 <nav aria-label="Pagination">
   <ul class="pagination">
