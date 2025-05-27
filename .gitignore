@@ -59,3 +59,4 @@ Thumbs.db
 
 # SQLite DB (if used for dev)
 *.sqlite3
+__pycache__/*.py[cod]

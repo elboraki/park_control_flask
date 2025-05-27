@@ -10,7 +10,7 @@
 
 <body>
 
-    <nav class="navbar navbar-expand-lg bg-warning" data-bs-theme="light">
+    <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="light">
         <div class="container-fluid">
           <a class="navbar-brand" href="#">
             <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo" id="logo">
@@ -55,6 +55,18 @@
           </div>
         </div>
       </nav>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
 <div class="container mt-4">
     {% block content %}{% endblock %}
