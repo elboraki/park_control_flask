@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">Tableau de bord</h2>
+    
+    <div class="row">
+        <!-- Vehicle Statistics -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistiques des véhicules</h5>
+                </div>
+                <div class="card-body">
+                    <div id="vehicleStatesLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                    <div id="vehicleStatesError" class="alert alert-danger d-none"></div>
+                    <canvas id="vehicleStatesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Répartition par marque</h5>
+                </div>
+                <div class="card-body">
+                    <div id="vehicleBrandsLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                    <div id="vehicleBrandsError" class="alert alert-danger d-none"></div>
+                    <canvas id="vehicleBrandsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reservation Statistics -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Réservations mensuelles</h5>
+                </div>
+                <div class="card-body">
+                    <div id="monthlyReservationsLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                    <div id="monthlyReservationsError" class="alert alert-danger d-none"></div>
+                    <canvas id="monthlyReservationsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top 5 véhicules les plus réservés</h5>
+                </div>
+                <div class="card-body">
+                    <div id="topVehiclesLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                    <div id="topVehiclesError" class="alert alert-danger d-none"></div>
+                    <canvas id="topVehiclesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Employee Statistics -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Répartition par département</h5>
+                </div>
+                <div class="card-body">
+                    <div id="employeeDepartmentsLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                    <div id="employeeDepartmentsError" class="alert alert-danger d-none"></div>
+                    <canvas id="employeeDepartmentsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Répartition par rôle</h5>
+                </div>
+                <div class="card-body">
+                    <div id="employeeRolesLoading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                    <div id="employeeRolesError" class="alert alert-danger d-none"></div>
+                    <canvas id="employeeRolesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Colors for charts
+    const colors = [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+        '#5a5c69', '#858796', '#6f42c1', '#fd7e14', '#20c9a6'
+    ];
+
+    function showError(elementId, message) {
+        const errorDiv = document.getElementById(elementId);
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('d-none');
+    }
+
+    function hideLoading(elementId) {
+        document.getElementById(elementId).style.display = 'none';
+    }
+
+    // Fetch and display vehicle statistics
+    fetch('/api/dashboard/vehicle-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            hideLoading('vehicleStatesLoading');
+            hideLoading('vehicleBrandsLoading');
+
+            // Vehicle states chart
+            new Chart(document.getElementById('vehicleStatesChart'), {
+                type: 'pie',
+                data: {
+                    labels: data.states.map(item => item.label),
+                    datasets: [{
+                        data: data.states.map(item => item.count),
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // Vehicle brands chart
+            new Chart(document.getElementById('vehicleBrandsChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.brands.map(item => item.label),
+                    datasets: [{
+                        label: 'Nombre de véhicules',
+                        data: data.brands.map(item => item.count),
+                        backgroundColor: colors[0]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            hideLoading('vehicleStatesLoading');
+            hideLoading('vehicleBrandsLoading');
+            showError('vehicleStatesError', 'Erreur lors du chargement des statistiques des véhicules: ' + error.message);
+            showError('vehicleBrandsError', 'Erreur lors du chargement des statistiques des véhicules: ' + error.message);
+        });
+
+    // Fetch and display reservation statistics
+    fetch('/api/dashboard/reservation-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            hideLoading('monthlyReservationsLoading');
+            hideLoading('topVehiclesLoading');
+
+            // Monthly reservations chart
+            new Chart(document.getElementById('monthlyReservationsChart'), {
+                type: 'line',
+                data: {
+                    labels: data.monthly.map(item => item.month),
+                    datasets: [{
+                        label: 'Nombre de réservations',
+                        data: data.monthly.map(item => item.count),
+                        borderColor: colors[0],
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Top vehicles chart
+            new Chart(document.getElementById('topVehiclesChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.vehicles.map(item => item.vehicle),
+                    datasets: [{
+                        data: data.vehicles.map(item => item.count),
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            hideLoading('monthlyReservationsLoading');
+            hideLoading('topVehiclesLoading');
+            showError('monthlyReservationsError', 'Erreur lors du chargement des statistiques des réservations: ' + error.message);
+            showError('topVehiclesError', 'Erreur lors du chargement des statistiques des réservations: ' + error.message);
+        });
+
+    // Fetch and display employee statistics
+    fetch('/api/dashboard/employee-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            hideLoading('employeeDepartmentsLoading');
+            hideLoading('employeeRolesLoading');
+
+            // Employee departments chart
+            new Chart(document.getElementById('employeeDepartmentsChart'), {
+                type: 'pie',
+                data: {
+                    labels: data.departments.map(item => item.label),
+                    datasets: [{
+                        data: data.departments.map(item => item.count),
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // Employee roles chart
+            new Chart(document.getElementById('employeeRolesChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.roles.map(item => item.label),
+                    datasets: [{
+                        label: 'Nombre d\'employés',
+                        data: data.roles.map(item => item.count),
+                        backgroundColor: colors[1]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            hideLoading('employeeDepartmentsLoading');
+            hideLoading('employeeRolesLoading');
+            showError('employeeDepartmentsError', 'Erreur lors du chargement des statistiques des employés: ' + error.message);
+            showError('employeeRolesError', 'Erreur lors du chargement des statistiques des employés: ' + error.message);
+        });
+});
+</script>
+{% endblock %} 

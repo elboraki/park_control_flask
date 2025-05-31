@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestion des Réservations</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReservationModal">
+            <i class="bi bi-plus-circle me-1"></i> Nouvelle réservation
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date de réservation</th>
+                    <th>Date début</th>
+                    <th>Date fin</th>
+                    <th>Véhicule</th>
+                    <th>Utilisateur</th>
+                    <th>Employé</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                <tr>
+                    <td>{{ reservation.date_reservation.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ reservation.date_debut.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ reservation.date_fin.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ reservation.vehicule.immatriculation }}</td>
+                    <td>
+                        <div>{{ reservation.utilisateur.nom }} {{ reservation.utilisateur.prenom }}</div>
+                        <small class="text-muted">{{ reservation.utilisateur.email }}</small>
+                    </td>
+                    <td>{{ reservation.employee.nom }} {{ reservation.employee.prenom }}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-warning edit-reservation" 
+                                    data-id="{{ reservation.id }}"
+                                    data-date-debut="{{ reservation.date_debut.strftime('%Y-%m-%dT%H:%M') }}"
+                                    data-date-fin="{{ reservation.date_fin.strftime('%Y-%m-%dT%H:%M') }}"
+                                    data-utilisateur="{{ reservation.utilisateur_id }}"
+                                    data-vehicule="{{ reservation.vehicule_id }}"
+                                    data-employee="{{ reservation.employee_id }}"
+                                    title="Modifier">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-reservation" 
+                                    data-id="{{ reservation.id }}"
+                                    title="Supprimer">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('reservations.index', page=pagination.prev_num) }}" aria-label="Previous">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for page in pagination.iter_pages() %}
+                {% if page %}
+                    <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('reservations.index', page=page) }}">{{ page }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('reservations.index', page=pagination.next_num) }}" aria-label="Next">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Add Reservation Modal -->
+    <div class="modal fade" id="addReservationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>Nouvelle réservation
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addReservationForm">
+                        <div class="mb-3">
+                            <label for="date_debut" class="form-label">Date de début</label>
+                            <input type="datetime-local" class="form-control" id="date_debut" name="date_debut" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date_fin" class="form-label">Date de fin</label>
+                            <input type="datetime-local" class="form-control" id="date_fin" name="date_fin" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="vehicule_id" class="form-label">Véhicule</label>
+                            <select class="form-select" id="vehicule_id" name="vehicule_id" required>
+                                {% for vehicule in vehicules %}
+                                <option value="{{ vehicule.id }}">{{ vehicule.immatriculation }} - {{ vehicule.marque }} {{ vehicule.modele }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="utilisateur_id" class="form-label">Utilisateur</label>
+                            <select class="form-select" id="utilisateur_id" name="utilisateur_id" required>
+                                {% for utilisateur in utilisateurs %}
+                                <option value="{{ utilisateur.id }}">
+                                    {{ utilisateur.nom }} {{ utilisateur.prenom }} ({{ utilisateur.email }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee_id" class="form-label">Employé</label>
+                            <select class="form-select" id="employee_id" name="employee_id" required>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}">{{ employee.nom }} {{ employee.prenom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Annuler
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveReservation">
+                        <i class="bi bi-check-circle me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Reservation Modal -->
+    <div class="modal fade" id="editReservationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>Modifier la réservation
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editReservationForm">
+                        <input type="hidden" id="edit_reservation_id">
+                        <div class="mb-3">
+                            <label for="edit_date_debut" class="form-label">Date de début</label>
+                            <input type="datetime-local" class="form-control" id="edit_date_debut" name="date_debut" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_date_fin" class="form-label">Date de fin</label>
+                            <input type="datetime-local" class="form-control" id="edit_date_fin" name="date_fin" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_vehicule_id" class="form-label">Véhicule</label>
+                            <select class="form-select" id="edit_vehicule_id" name="vehicule_id" required>
+                                {% for vehicule in vehicules %}
+                                <option value="{{ vehicule.id }}">{{ vehicule.immatriculation }} - {{ vehicule.marque }} {{ vehicule.modele }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_utilisateur_id" class="form-label">Utilisateur</label>
+                            <select class="form-select" id="edit_utilisateur_id" name="utilisateur_id" required>
+                                {% for utilisateur in utilisateurs %}
+                                <option value="{{ utilisateur.id }}">
+                                    {{ utilisateur.nom }} {{ utilisateur.prenom }} ({{ utilisateur.email }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_employee_id" class="form-label">Employé</label>
+                            <select class="form-select" id="edit_employee_id" name="employee_id" required>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}">{{ employee.nom }} {{ employee.prenom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Annuler
+                    </button>
+                    <button type="button" class="btn btn-primary" id="updateReservation">
+                        <i class="bi bi-check-circle me-1"></i>Mettre à jour
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Reservation
+    document.getElementById('saveReservation').addEventListener('click', function() {
+        const form = document.getElementById('addReservationForm');
+        
+        // Validate dates
+        if (!form.date_debut.value || !form.date_fin.value) {
+            alert('Veuillez remplir les dates de début et de fin');
+            return;
+        }
+
+        // Validate that end date is after start date
+        const dateDebut = new Date(form.date_debut.value);
+        const dateFin = new Date(form.date_fin.value);
+        
+        if (dateFin <= dateDebut) {
+            alert('La date de fin doit être postérieure à la date de début');
+            return;
+        }
+
+        const formData = {
+            date_debut: form.date_debut.value,
+            date_fin: form.date_fin.value,
+            vehicule_id: parseInt(form.vehicule_id.value),
+            utilisateur_id: parseInt(form.utilisateur_id.value),
+            employee_id: parseInt(form.employee_id.value)
+        };
+
+        fetch('/reservations/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erreur lors de l\'ajout de la réservation: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de l\'ajout de la réservation');
+        });
+    });
+
+    // Edit Reservation
+    document.querySelectorAll('.edit-reservation').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const date_debut = this.dataset.dateDebut;
+            const date_fin = this.dataset.dateFin;
+            const vehicule = this.dataset.vehicule;
+            const utilisateur = this.dataset.utilisateur;
+            const employee = this.dataset.employee;
+
+            document.getElementById('edit_reservation_id').value = id;
+            document.getElementById('edit_date_debut').value = date_debut;
+            document.getElementById('edit_date_fin').value = date_fin;
+            document.getElementById('edit_vehicule_id').value = vehicule;
+            document.getElementById('edit_utilisateur_id').value = utilisateur;
+            document.getElementById('edit_employee_id').value = employee;
+
+            new bootstrap.Modal(document.getElementById('editReservationModal')).show();
+        });
+    });
+
+    // Update Reservation
+    document.getElementById('updateReservation').addEventListener('click', function() {
+        const id = document.getElementById('edit_reservation_id').value;
+        const form = document.getElementById('editReservationForm');
+        
+        // Validate dates
+        if (!form.date_debut.value || !form.date_fin.value) {
+            alert('Veuillez remplir les dates de début et de fin');
+            return;
+        }
+
+        // Validate that end date is after start date
+        const dateDebut = new Date(form.date_debut.value);
+        const dateFin = new Date(form.date_fin.value);
+        
+        if (dateFin <= dateDebut) {
+            alert('La date de fin doit être postérieure à la date de début');
+            return;
+        }
+
+        const formData = {
+            date_debut: form.date_debut.value,
+            date_fin: form.date_fin.value,
+            vehicule_id: parseInt(form.vehicule_id.value),
+            utilisateur_id: parseInt(form.utilisateur_id.value),
+            employee_id: parseInt(form.employee_id.value)
+        };
+
+        fetch(`/reservations/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la modification de la réservation: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de la modification de la réservation');
+        });
+    });
+
+    // Delete Reservation
+    document.querySelectorAll('.delete-reservation').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette réservation ?')) {
+                const id = this.dataset.id;
+                fetch(`/reservations/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Erreur lors de la suppression de la réservation: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erreur lors de la suppression de la réservation');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 
