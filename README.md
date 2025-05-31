@@ -196,7 +196,6 @@ Ce projet est sous licence [MIT](LICENSE).
 
 - [FEDE - Fédération Européenne des Écoles](https://www.fede.education/) pour le cadre du projet
 - Tous les contributeurs
-- La communauté open source
 
 ---
 
