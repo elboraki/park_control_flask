@@ -1,7 +1,7 @@
 # Park Control - Système de Gestion de Parc Automobile
 
 <div align="center">
-  <img src="https://www.fede.education/wp-content/uploads/2023/03/logo-fede.png" alt="FEDE Logo" width="200"/>
+  <img src="https://www.fede.education/wp-content/uploads/2024/10/logo-FEDE_2023_2xRetina.png" alt="FEDE Logo" width="200"/>
   <br/>
   <small>Projet réalisé dans le cadre du Bachelor Européen en Informatique et Réseaux</small>
   <br/>
