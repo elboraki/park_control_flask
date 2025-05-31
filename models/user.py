@@ -1,7 +1,6 @@
 # models/user.py
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from models.database import db
+from models.role import Role
 
 class User(db.Model):
     __tablename__ = 'utilisateurs'
@@ -12,9 +11,9 @@ class User(db.Model):
     login = db.Column("login",db.String(50))
     password = db.Column("mot_passe",db.String(50))
     email = db.Column("email",db.String(50),unique=True)
-    role_id=db.Column("role_id",db.Integer)
-
-
-
+    role_id = db.Column("role_id", db.Integer, db.ForeignKey('roles.id'))  
+    
+    role = db.relationship('Role', backref='users')
+    
     def __repr__(self):
         return f'<User {self.login}>'

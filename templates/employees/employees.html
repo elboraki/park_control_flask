@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+
+{% block title %}employees{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Liste des Employés</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+            <i class="bi bi-plus-lg"></i> Ajouter un employé
+        </button>
+    </div>
+
+    <!-- Search Form -->
+    <div class="mb-4">
+        <div class="input-group">
+            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un employé...">
+            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                <i class="bi bi-search"></i> Rechercher
+            </button>
+        </div>
+    </div>
+
+    <!-- Employees Table -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Date d'embauche</th>
+                    <th>Poste</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employeesTableBody">
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.id }}</td>
+                    <td>{{ employee.nom }}</td>
+                    <td>{{ employee.prenom }}</td>
+                    <td>{{ employee.date_hire.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ employee.poste.titre if employee.poste else '' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary edit-btn" data-id="{{ employee.id }}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-btn" data-id="{{ employee.id }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% for page in pagination.iter_pages() %}
+                {% if page %}
+                    <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('employees_bp.list_employees', page=page) }}">{{ page }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmployeeModalLabel">Ajouter un employé</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('employees_bp.add_employee') }}">
+                <div class="modal-body">
+                    {{ form.csrf_token }}
+                    <div class="mb-3">
+                        {{ form.nom.label(class="form-label") }}
+                        {{ form.nom(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.prenom.label(class="form-label") }}
+                        {{ form.prenom(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.date_hire.label(class="form-label") }}
+                        {{ form.date_hire(class="form-control", type="date") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.poste_id.label(class="form-label") }}
+                        {{ form.poste_id(class="form-select") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEmployeeModalLabel">Modifier l'employé</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editEmployeeForm">
+                <div class="modal-body">
+                    {{ form.csrf_token }}
+                    <input type="hidden" id="editEmployeeId">
+                    <div class="mb-3">
+                        {{ form.nom.label(class="form-label") }}
+                        {{ form.nom(class="form-control", id="editNom") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.prenom.label(class="form-label") }}
+                        {{ form.prenom(class="form-control", id="editPrenom") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.date_hire.label(class="form-label") }}
+                        {{ form.date_hire(class="form-control", type="date", id="editDateHire") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.poste_id.label(class="form-label") }}
+                        {{ form.poste_id(class="form-select", id="editPosteId") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteEmployeeModal" tabindex="-1" aria-labelledby="deleteEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteEmployeeModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cet employé ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Reset form when modal is closed
+    document.getElementById('addEmployeeModal').addEventListener('hidden.bs.modal', function () {
+        this.querySelector('form').reset();
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const tableBody = document.getElementById('employeesTableBody');
+
+    function performSearch() {
+        const query = searchInput.value.trim();
+        
+        fetch(`/employees/search?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = data.map(employee => `
+                    <tr>
+                        <td>${employee.id}</td>
+                        <td>${employee.nom}</td>
+                        <td>${employee.prenom}</td>
+                        <td>${employee.date_hire}</td>
+                        <td>${employee.poste}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary edit-btn" data-id="${employee.id}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${employee.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                attachEventListeners();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Search on button click
+    searchButton.addEventListener('click', performSearch);
+
+    // Search on Enter key press
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performSearch();
+        }
+    });
+
+    // Optional: Search as you type (with debounce)
+    let debounceTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(performSearch, 300);
+    });
+
+    // Edit functionality
+    function attachEventListeners() {
+        // Edit buttons
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.dataset.id;
+                fetch(`/employees/edit/${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('editEmployeeId').value = data.id;
+                        document.getElementById('editNom').value = data.nom;
+                        document.getElementById('editPrenom').value = data.prenom;
+                        document.getElementById('editDateHire').value = data.date_hire;
+                        document.getElementById('editPosteId').value = data.poste_id;
+                        
+                        const editModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+                        editModal.show();
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+                deleteModal.show();
+                
+                document.getElementById('confirmDelete').onclick = function() {
+                    fetch(`/employees/delete/${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            deleteModal.hide();
+                            performSearch(); // Refresh the table
+                        } else {
+                            alert('Erreur lors de la suppression');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                };
+            });
+        });
+    }
+
+    // Initial event listeners attachment
+    attachEventListeners();
+
+    // Handle edit form submission
+    document.getElementById('editEmployeeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editEmployeeId').value;
+        const formData = {
+            nom: document.getElementById('editNom').value,
+            prenom: document.getElementById('editPrenom').value,
+            date_hire: document.getElementById('editDateHire').value,
+            poste_id: parseInt(document.getElementById('editPosteId').value)
+        };
+
+        fetch(`/employees/edit/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editEmployeeModal'));
+                editModal.hide();
+                performSearch(); // Refresh the table
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                // Insert alert at the top of the container
+                const container = document.querySelector('.container');
+                container.insertBefore(alertDiv, container.firstChild);
+            } else {
+                throw new Error(data.message || 'Erreur lors de la modification');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message || 'Erreur lors de la modification');
+        });
+    });
+</script>
+{% endblock %}
+
+
