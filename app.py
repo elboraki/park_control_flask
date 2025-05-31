@@ -1,4 +1,4 @@
-from flask import Flask,render_template
+from flask import Flask, render_template, redirect, url_for
 from config import Config
 from models.database import db
 from routes.users import users_bp
@@ -30,6 +30,12 @@ def create_app():
     app.register_blueprint(reservations_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(auth_bp)
+
+    # Add root route that redirects to login
+    @app.route('/')
+    def index():
+        return redirect(url_for('auth.login'))
+
     return app
 
 

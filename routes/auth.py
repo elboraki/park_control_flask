@@ -16,6 +16,10 @@ def login_required(f):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    # If user is already logged in, redirect to dashboard
+    if 'user_id' in session:
+        return redirect(url_for('dashboard.index'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
